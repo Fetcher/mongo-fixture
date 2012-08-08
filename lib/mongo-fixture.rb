@@ -56,5 +56,23 @@ module Mongo
       end
       return @checked = true
     end
+    
+    # Forces the check to pass. Dangerous!
+    def force_checked!
+      @checked = true
+    end
+    
+    # Returns the SymbolMatrix with the data referring to that table
+    def [] reference
+      @data[reference]
+    end
+    
+    # Method missing, for enabling discovery of tables
+    def method_missing s, *args
+      return @data[s] if @data && @data.has_key?(s)
+      return super
+    end
+    
+    class LoadingFixtureIllegal < StandardError; end
   end
 end

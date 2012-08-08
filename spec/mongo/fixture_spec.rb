@@ -165,7 +165,7 @@ describe Mongo::Fixture do
     it "should count records on all the used collections" do
       Mongo::Fixture.any_instance.stub :push         # push doesn't get called
       
-      database = Mongo::Database.new                 # Fake database connection
+      database = double 'mongodb'                    # Fake database connection
       counter = stub                                 # fake collection
 
       database.should_receive(:[]).with(:users).and_return counter
