@@ -8,3 +8,7 @@ group :cucumber do
   gem "bson_ext"
   gem "pry"
 end
+
+group :test do
+  gem "rake"
+end

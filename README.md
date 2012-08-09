@@ -2,7 +2,7 @@ Mongo::Fixture
 ===============
 [![Build Status](https://secure.travis-ci.org/Fetcher/mongo-fixture.png)](http://travis-ci.org/Fetcher/mongo-fixture) [![Code Climate](https://codeclimate.com/badge.png)](https://codeclimate.com/github/Fetcher/mongo-fixture)
 
-Just like Rails 2 fixtures, but for [MongoDB][mongo-db] (using the standard [mongo connector Gem][mongo-gem].
+Just like Rails 2 fixtures, but for [MongoDB][mongo-db] (using the standard [mongo connector Gem][mongo-gem] ).
 
 [mongo-db]: http://www.mongodb.org/
 [mongo-gem]: http://rubygems.org/gems/mongo
