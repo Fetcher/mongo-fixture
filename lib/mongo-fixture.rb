@@ -43,21 +43,6 @@ module Mongo
       Mongo::Fixture.path
     end    
     
-    # Assures that the collections are empty before proceeding
-    def check
-      return @checked if @checked # If already checked, it's alright
-
-      raise MissingFixtureError, "No fixture has been loaded, nothing to check" unless @data
-      raise MissingConnectionError, "No connection has been provided, impossible to check" unless @connection
-      
-      @data.each_key do |collection|
-        if @connection[collection].count != 0
-          raise CollectionsNotEmptyError, "The collection '#{collection}' is not empty, all collections should be empty prior to testing" 
-        end
-      end
-      return @checked = true
-    end
-    
     # Forces the check to pass. Dangerous!
     def force_checked!
       @checked = true
