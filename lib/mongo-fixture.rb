@@ -1,6 +1,7 @@
 # Third-party
 require "fast/fast"
 require "symbolmatrix"
+require "mongo"
 
 require "mongo-fixture/version"
 
@@ -73,6 +74,91 @@ module Mongo
       return super
     end
     
+    # Returns the current database connection
+    attr_reader :connection   
+    
+    # Sets the connection. Raises an ChangingConnectionIllegal exception if this fixture has already been checked
+    def connection= the_connection
+      raise ChangingConnectionIllegal, "A check has already been performed, changing the connection now is illegal" if @checked
+      @connection = the_connection
+    end
+    
+    # Returns the current data collection
+    attr_reader :data
+    
+    # Assures that the collections are empty before proceeding
+    def check
+      return @checked if @checked # If already checked, it's alright
+
+      raise MissingFixtureError, "No fixture has been loaded, nothing to check" unless @data
+      raise MissingConnectionError, "No connection has been provided, impossible to check" unless @connection
+      
+      @data.each_key do |collection|
+        raise CollectionsNotEmptyError, "The collection '#{collection}' is not empty, all collections should be empty prior to testing" if @connection[collection].count != 0
+      end
+      return @checked = true
+    end
+    
+    # Inserts the fixture data into the corresponding collections
+    def push
+      check
+      
+      @data.each do |collection, matrix|
+        matrix.each do |element, values|
+          begin
+            @connection[collection].insert simplify values.to_hash
+          rescue MissingProcessedValueError => m
+            rollback
+            raise MissingProcessedValueError, "In record '#{element}' to be inserted into '#{collection}', the processed value of field '#{m.field}' is missing, aborting"
+          end
+        end
+      end
+    end
+    
+    # Simplifies the hash in order to insert it into the database
+    # (Note: I'm well aware that this functionality belongs in a dependency,
+    # specially now that is repeated here and in Sequel::Fixture)
+    # @param [Hash] the hash to be processed 
+    def simplify the_hash
+      the_returned_hash = {}
+      the_hash.each do |key, value|
+        if value.is_a? Hash
+          unless value.has_key? :processed
+            raise MissingProcessedValueError.new "The processed value to insert into the db is missing from the field '#{key}', aborting", key 
+          end
+          the_returned_hash[key] = value[:processed]
+        else
+          the_returned_hash[key] = value
+        end
+      end
+      return the_returned_hash
+    end
+    
+    # Empties the collections, only if they were empty to begin with
+    def rollback
+      begin
+        check
+        
+        @data.each_key do |collection|
+          @connection[collection].drop
+        end
+      rescue CollectionsNotEmptyError => e
+        raise RollbackIllegalError, "The collections weren't empty to begin with, rollback aborted."
+      end
+    end
+    
     class LoadingFixtureIllegal < StandardError; end
+    class CollectionsNotEmptyError < StandardError; end
+    class MissingFixtureError < StandardError; end
+    class MissingConnectionError < StandardError; end
+    class ChangingConnectionIllegal < StandardError; end
+    class RollbackIllegalError < StandardError; end
+    class MissingProcessedValueError < StandardError
+      attr_accessor :field
+      def initialize message, field = nil
+        @field = field
+        super message
+      end
+    end
   end
 end

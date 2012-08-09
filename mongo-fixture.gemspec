@@ -4,9 +4,9 @@ require File.expand_path('../lib/mongo-fixture/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Xavier Via"]
   gem.email         = ["xavier.via.canel@gmail.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = ""
+  gem.description   = %q{Flexible fixtures for the MongoDB Gem inspired in Rails 2 fixtures}
+  gem.summary       = %q{Flexible fixtures for the MongoDB Gem inspired in Rails 2 fixtures}
+  gem.homepage      = "http://github.com/Fetcher/mongo-fixture"
 
   gem.add_dependency "mongo"
   gem.add_dependency "fast"

@@ -107,7 +107,7 @@ describe Mongo::Fixture do
         @fix.load :test
       end
       
-      context "a table key is passed" do
+      context "a collection key is passed" do
         it "should return the SymbolMatrix containing the same info as in the matching YAML file" do
           @fix[:users].should be_a SymbolMatrix
           @fix[:users].john.name.should == "John"
@@ -125,7 +125,7 @@ describe Mongo::Fixture do
   
   describe "#method_missing" do
     context "a valid fixture has been loaded" do
-      context "a table key is passed" do
+      context "a collection key is passed" do
         before do
           Fast.file.write "test/fixtures/test/users.yaml", "john: { name: John, last_name: Wayne }"
           Fast.file.write "test/fixtures/test/actions.yaml", "walk: { user_id: 1, action: Walks }"
@@ -133,7 +133,7 @@ describe Mongo::Fixture do
           @fix.stub :check
           @fix.load :test
         end
-      
+        
         it "should return the SymbolMatrix containing the same info as in the matching YAML file" do
           @fix.users.should be_a SymbolMatrix
           @fix.users.john.name.should == "John"
@@ -141,7 +141,7 @@ describe Mongo::Fixture do
           
           @fix.actions.walk.action.should == "Walks"          
         end
-
+        
         after do
           Fast.dir.remove! :test
         end
@@ -167,12 +167,11 @@ describe Mongo::Fixture do
       
       database = double 'mongodb'                    # Fake database connection
       counter = stub                                 # fake collection
-
+      
       database.should_receive(:[]).with(:users).and_return counter
-      database.should_receive(:[]).with(:actions).and_return counter      
+      database.should_receive(:[]).with(:actions).and_return counter
       counter.should_receive(:count).twice.and_return 0
       
-      database = double 'mongodb'
       fix = Mongo::Fixture.new nil, database
       collections = [:users, :actions]
       def fix.stub_data
@@ -189,7 +188,7 @@ describe Mongo::Fixture do
       counter.should_receive(:count).and_return 4
       database.stub(:[]).and_return counter
       Mongo::Fixture.any_instance.stub :push
-
+      
       fix = Mongo::Fixture.new nil, database
       def fix.stub_data
         @data = { :users => nil}
@@ -360,17 +359,17 @@ describe Mongo::Fixture do
       before do
         Fast.file.write "test/fixtures/test/users.yaml", "john: { name: John, last_name: Wayne }"
         Fast.file.write "test/fixtures/test/actions.yaml", "walk: { user_id: 1, action: Walks }"
-        @table    = stub
-        @database = stub :[] => @table
+        @collection    = stub
+        @database = stub :[] => @collection
         @fix = Mongo::Fixture.new
         @fix.load :test
         @fix.connection = @database
       end
     
       it "should attempt to insert the data into the database" do
-        @table.stub :count => 0
-        @table.should_receive(:insert).with :name => "John", :last_name => "Wayne"
-        @table.should_receive(:insert).with :user_id => 1, :action => "Walks"
+        @collection.stub :count => 0
+        @collection.should_receive(:insert).with :name => "John", :last_name => "Wayne"
+        @collection.should_receive(:insert).with :user_id => 1, :action => "Walks"
         @fix.push
       end
       
@@ -386,7 +385,7 @@ describe Mongo::Fixture do
       
       it "should insert the <processed> alternative" do
         database = double 'database'
-        insertable = double 'table'
+        insertable = double 'collection'
         insertable.stub :count => 0
         insertable.should_receive(:insert).with :password => '35ferwt352'
         database.stub(:[]).and_return insertable
@@ -405,7 +404,7 @@ describe Mongo::Fixture do
       end
       
       it "should fail" do
-        database = double 'database', :[] => stub( 'table', :count => 0, :truncate => nil  )
+        database = double 'database', :[] => stub( 'collection', :count => 0, :drop => nil  )
         fix = Mongo::Fixture.new :test, database, false
         expect { fix.push
         }.to raise_error Mongo::Fixture::MissingProcessedValueError, 
@@ -414,7 +413,7 @@ describe Mongo::Fixture do
       
       
       it "should call the rollback" do
-        database = double 'database', :[] => stub( 'table', :count => 0, :truncate => nil )
+        database = double 'database', :[] => stub( 'collection', :count => 0, :drop => nil )
         fix = Mongo::Fixture.new :test, database, false
         fix.should_receive :rollback
         expect { fix.push
@@ -491,10 +490,10 @@ describe Mongo::Fixture do
     context "the check is failing" do
       it "should raise a custom error for the rollback" do
         fix = Mongo::Fixture.new
-        fix.stub(:check).and_raise Mongo::Fixture::TablesNotEmptyError
+        fix.stub(:check).and_raise Mongo::Fixture::CollectionsNotEmptyError
         expect { fix.rollback
         }.to raise_error Mongo::Fixture::RollbackIllegalError, 
-          "The tables weren't empty to begin with, rollback aborted."
+          "The collections weren't empty to begin with, rollback aborted."
       end
     end
     
@@ -515,8 +514,8 @@ describe Mongo::Fixture do
         @fix.check.should === true
       end
       
-      it "should call truncate on each of the used tables" do
-        @truncable.should_receive(:truncate).exactly(3).times
+      it "should call drop on each of the used collections" do
+        @truncable.should_receive(:drop).exactly(3).times
         @fix.rollback
       end
     end
