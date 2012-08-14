@@ -437,7 +437,7 @@ describe Mongo::Fixture do
           comm = double 'comments', :count => 0, :drop => nil
           comm.should_receive( :insert ).with( :user => "un id", :text => "FLAME" )
           record = stub 'record'
-          record.should_receive( :[] ).with( :_id ).and_return "un id"
+          record.should_receive( :[] ).with( "_id" ).and_return "un id"
           usrs = double 'users', :count => 0, :find => stub( :first => record ), :drop => nil, :insert => nil
           database.stub :[] do |coll|
             case coll
