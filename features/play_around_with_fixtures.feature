@@ -82,3 +82,34 @@ Scenario: I save the done fixtures so to perform the rollbacks later
   When I stash the fixture as done   
   And I rollback the stashed fixtures
   Then I should see 0 records in users
+
+Scenario: References across collections
+  Given a collection users
+  And a collection sessions
+  And a file "test/fixtures/references/users.yaml" with:
+    """
+    pepe:
+      username: pepe
+      password: 
+        raw: secreto
+        processed: 252db48960f032db4bb604bc26f97106fa85ff88dedef3a28671b6bcd9f9644bf90d7e444d587c9351dfa237a6fc8fe38641a8469d084a166c7807d9c6564860
+      name: Pepe
+    """
+  And a file "test/fixtures/references/sessions.yaml" with: 
+    """
+    14_horas:
+      user: 
+        users: pepe
+      time: 2012-07-30T14:02:40-03:00
+    y_tres_minutos:
+      user: 
+        users: pepe
+      time: 2012-07-30T14:03:40-03:00
+    y_cuatro_minutos:
+      user: 
+        users: pepe
+      time: 2012-07-30T14:04:40-03:00
+    """
+  And I load the references fixture
+  Then I should see 1 record in users with username "pepe" and name "Pepe"
+  And I should see 3 records in sessions

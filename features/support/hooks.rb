@@ -1,5 +1,5 @@
 After do
-  [:visitors, :aliens, :visits, :users].each do |collection|
+  [:visitors, :aliens, :visits].each do |collection|
     @DB[collection].drop
   end
   Fast.dir.remove! :test, :fixtures

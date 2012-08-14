@@ -90,15 +90,16 @@ module Mongo
       check
       
       @data.each do |collection, matrix|
-        matrix.each do |element, values|
-          begin
-            @connection[collection].insert simplify values.to_hash
-            @inserted ||= Array.new
-            @inserted << collection
-          rescue MissingProcessedValueError => m
-            rollback
-            raise MissingProcessedValueError, "In record '#{element}' to be inserted into '#{collection}', the processed value of field '#{m.field}' is missing, aborting"
+        unless data_was_inserted_in? collection
+          matrix.each do |element, values|
+            begin
+                @connection[collection].insert simplify values.to_hash
+            rescue MissingProcessedValueError => m
+              rollback
+              raise MissingProcessedValueError, "In record '#{element}' to be inserted into '#{collection}', the processed value of field '#{m.field}' is missing, aborting"
+            end
           end
+          @inserted << collection
         end
       end
     end
@@ -128,7 +129,9 @@ module Mongo
             unless data_was_inserted_in? actual_option
               insert_data_for actual_option
             end
-            the_returned_hash[key] = @connection[actual_option].find( @data[actual_option][value[actual_option].to_sym] ).first[:_id]
+            current_collection = @connection[actual_option]
+            current_data = simplify @data[actual_option][value[actual_option].to_sym]
+            the_returned_hash[key] = current_collection.find(current_data).first["_id"]
           end
         else
           the_returned_hash[key] = value

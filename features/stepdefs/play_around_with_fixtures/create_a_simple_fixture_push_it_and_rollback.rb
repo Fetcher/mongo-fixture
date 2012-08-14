@@ -37,7 +37,7 @@ And /^a file "(.+?)" with:$/ do |file, content|
 end
 
 When /^I load the (\w+) fixture$/ do |fixture|
-#  binding.pry
+  #binding.pry
   @fixture = Mongo::Fixture.new fixture.to_sym, @DB
 end
 
@@ -66,4 +66,3 @@ end
 Then /^I should see (\d+) records in (\w+)$/ do |amount, collection|
   @DB[collection].count.should == amount.to_i
 end
-
