@@ -1,5 +1,4 @@
 require "mongo-fixture"
-require "pry"
 
 describe Mongo::Fixture do
   context "two collections are to be inserted with references" do
