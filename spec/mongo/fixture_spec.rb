@@ -1,5 +1,4 @@
 require "mongo-fixture"
-require "pry"
 
 describe Mongo::Fixture do
   describe ".path" do
