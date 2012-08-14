@@ -140,7 +140,7 @@ module Mongo
     # Inserts the collection data into the database
     def insert_data_for collection
       @data[collection].each do |key, record|
-        @connection[collection].insert record
+        @connection[collection].insert simplify record
       end
       @inserted << collection
     end
