@@ -484,7 +484,11 @@ describe Mongo::Fixture do
   describe "#data_was_inserted_in?" do
     it "should be private" do
       fix = Mongo::Fixture.new
-      fix.private_methods(false).should include :data_was_inserted_in?
+      if RUBY_VERSION =~ /1.8../
+        fix.private_methods(false).should include "data_was_inserted_in?"
+      else
+        fix.private_methods(false).should include :data_was_inserted_in?
+      end
     end
     
     context "there is a simple fixture and a collection has been inserted by this fixture" do
