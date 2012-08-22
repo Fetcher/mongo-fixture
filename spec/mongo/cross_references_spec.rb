@@ -1,4 +1,4 @@
-require "mongo-fixture"
+require "spec_helper"
 
 describe Mongo::Fixture do
   context "two collections are to be inserted with references" do
@@ -34,6 +34,46 @@ describe Mongo::Fixture do
 
     after do
       Fast.dir.remove! :test
+    end
+  end
+
+  context "many to many associations" do
+    pending "refactoring" do
+      before do
+        Fast.file.write "test/fixtures/associations/users.yaml", "johnny:
+    name: John
+    documents:
+      documents: [brief, docs, extra_data]
+  susan:
+    name: Susan
+    documents:
+      documents: [brief, resume, docs]"
+        Fast.file.write "test/fixtures/associations/documents.yaml", "brief:
+    title: Data
+    text: Resumee
+  docs:
+    title: Doc
+    text: Documentation
+  extra_data:
+    title: Xtra
+    text: More and more data
+  resume:
+    title: CV
+    text: Curriculum Vitae"
+      end
+
+      it "should not fail" do
+        collection = double 'coll', :count => 0, :insert => nil
+        database = double 'database'
+        database.stub :[] do |argument|
+          collection
+        end
+        Mongo::Fixture.new :associations, database
+      end
+
+      after do
+        Fast.dir.remove! :test
+      end
     end
   end
 end

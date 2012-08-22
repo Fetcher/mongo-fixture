@@ -113,3 +113,37 @@ Scenario: References across collections
   And I load the references fixture
   Then I should see 1 record in users with username "pepe" and name "Pepe"
   And I should see 3 records in sessions
+
+Scenario: Many-to-many associations
+  Given a collection users
+  And a collection documents
+  And a file "test/fixtures/associations/users.yaml" with:
+    """
+    johnny:
+      name: John
+      documents:
+        documents: [brief, docs, extra_data]
+    susan:
+      name: Susan
+      documents:
+        documents: [brief, resume, docs]
+    """
+  And a file "test/fixtures/associations/documents.yaml" with:
+    """
+    brief:
+      title: Data
+      text: Resumee
+    docs:
+      title: Doc
+      text: Documentation
+    extra_data:
+      title: Xtra
+      text: More and more data
+    resume:
+      title: CV
+      text: Curriculum Vitae
+    """
+  When I load the associations fixture
+  Then I should see 2 records in users
+  And I should see 3 records in documents
+  And the user named "John" should have in documents the id of the one titled "Doc"

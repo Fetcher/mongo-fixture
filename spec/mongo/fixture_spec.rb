@@ -1,4 +1,4 @@
-require "mongo-fixture"
+require "spec_helper"
 
 describe Mongo::Fixture do
   describe ".path" do
@@ -84,7 +84,7 @@ describe Mongo::Fixture do
       end
     end
   end
-  
+
   describe "#force_checked!" do
     it "check should return true and should not call [] in the passed database" do
       database = stub 'database'
@@ -96,7 +96,7 @@ describe Mongo::Fixture do
       fix.check.should === true
     end
   end
-  
+
   describe "#[]" do
     context "a valid fixture has been loaded" do
       before do
@@ -122,7 +122,7 @@ describe Mongo::Fixture do
       end
     end    
   end
-  
+
   describe "#method_missing" do
     context "a valid fixture has been loaded" do
       context "a collection key is passed" do
@@ -153,7 +153,7 @@ describe Mongo::Fixture do
       }.to raise_error NoMethodError
     end
   end
-  
+
   describe "#fixtures_path" do
     it "should call Mongo::Fixture.path" do
       Mongo::Fixture.should_receive :path
@@ -288,7 +288,7 @@ describe Mongo::Fixture do
       fix.connection.should === connection
     end
   end
-  
+
   describe "#connection=" do
     it "sets the connection" do
       fix = Mongo::Fixture.new
@@ -318,7 +318,7 @@ describe Mongo::Fixture do
       end
     end
   end
-  
+
   describe "#data" do
     context "a fixture has been loaded" do
       before do 
@@ -343,7 +343,7 @@ describe Mongo::Fixture do
       end
     end
   end
-  
+
   describe "#push" do
     it "should call #check" do
       fix = Mongo::Fixture.new
@@ -480,118 +480,7 @@ describe Mongo::Fixture do
       end      
     end
   end
-  
-  describe "#data_was_inserted_in?" do
-    it "should be private" do
-      fix = Mongo::Fixture.new
-      if RUBY_VERSION =~ /1.8../
-        fix.private_methods(false).should include "data_was_inserted_in?"
-      else
-        fix.private_methods(false).should include :data_was_inserted_in?
-      end
-    end
-    
-    context "there is a simple fixture and a collection has been inserted by this fixture" do
-      before do
-        Fast.file.write "test/fixtures/test/users.yaml", "pepe: { user: pepe }"
-      end
-      
-      it "should return true" do
-        database = double 'database'
-        coll = double 'collection', :count => 0, :insert => nil
-        database.stub :[] => coll
-        fix = Mongo::Fixture.new :test, database
-        def fix.loot
-          data_was_inserted_in?(:users).should === true
-        end
-        fix.loot
-      end
-      
-      after do
-        Fast.dir.remove! :test
-      end
-    end
-    
-    context "there is a simple fixture and a collection was inserted but not this" do
-      before do
-        Fast.file.write "test/fixtures/test/users.yaml", "pepe: { user: pepe }"
-      end
-      
-      it "should return false" do
-        database = double 'database'
-        coll = double 'collection', :count => 0, :insert => nil
-        database.stub :[] => coll
-        fix = Mongo::Fixture.new :test, database
-        def fix.loot
-          data_was_inserted_in?(:comment).should === false
-        end
-        fix.loot
-      end
-      
-      after do
-        Fast.dir.remove! :test
-      end
-    end
-  end
-  
-  # This should go in a dependency, pending refactoring TODO
-  describe "#simplify" do
-    context "when receiving a multidimensional hash containing a field with raw and processed" do
-      it "should convert it in a simple hash using the processed value as replacement" do
-        base_hash = {
-          :name => "Jane",
-          :band => "Witherspoons",
-          :pass => {
-            :raw => "secret",
-            :processed => "53oih7fhjdgj3f8="
-          },
-          :email => {
-            :raw => "Jane@gmail.com ",
-            :processed => "jane@gmail.com"
-          }
-        }
-        
-        fix = Mongo::Fixture.new
-        def fix.stub_data
-          @data = {}
-        end
-        fix.stub_data
-        simplified = fix.simplify base_hash
-        simplified.should == {
-          :name => "Jane",
-          :band => "Witherspoons",
-          :pass => "53oih7fhjdgj3f8=",
-          :email => "jane@gmail.com"
-        }
-      end
-    end
-    
-    context "the multidimensional array is missing the processed part of the field" do
-      it "should raise an exception" do
-        base_hash = {
-          :name => "Jane",
-          :pass => {
-            :raw => "secret",
-            :not_processed => "53oih7fhjdgj3f8="
-          },
-          :email => {
-            :raw => "Jane@gmail.com ",
-            :processed => "jane@gmail.com"
-          }
-        }
-        
-        fix = Mongo::Fixture.new
-        def fix.stub_data
-          @data = {}
-        end
-        fix.stub_data
-        expect { fix.simplify base_hash
-        }.to raise_error Mongo::Fixture::MissingProcessedValueError, 
-          "The processed value to insert into the db is missing from the field 'pass', aborting"
-      end
-    end
-  end
-  
+
   describe "#rollback" do
     it "should check" do
       fix = Mongo::Fixture.new
@@ -634,42 +523,6 @@ describe Mongo::Fixture do
         @truncable.should_receive(:drop).exactly(3).times
         @fix.rollback
       end
-    end
-  end
-  
-  context "two collections are to be inserted with references" do
-    before do 
-      Fast.file.write "test/fixtures/references/users.yaml", "pepe:
-  username: pepe
-  password: 
-  raw: secreto
-  processed: 252db48960f032db4bb604bc26f97106fa85ff88dedef3a28671b6bcd9f9644bf90d7e444d587c9351dfa237a6fc8fe38641a8469d084a166c7807d9c6564860
-  name: Pepe"
-      Fast.file.write "test/fixtures/references/sessions.yaml", "14_horas:
-  user: 
-  users: pepe
-  time: 2012-07-30T14:02:40-03:00
-  y_tres_minutos:
-  user: 
-  users: pepe
-  time: 2012-07-30T14:03:40-03:00
-  y_cuatro_minutos:
-  user: 
-  users: pepe
-  time: 2012-07-30T14:04:40-03:00"
-    end
-
-    it "should not fail!" do
-      collection = double 'coll', :count => 0, :insert => nil
-      database = double 'database'
-      database.stub :[] do |argument|
-        collection
-      end
-      Mongo::Fixture.new :references, database
-    end
-
-    after do
-      Fast.dir.remove! :test
     end
   end
 end
