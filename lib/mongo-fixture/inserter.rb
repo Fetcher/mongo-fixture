@@ -18,7 +18,7 @@ module Mongo
           if value.is_a? Hash
             
             # If no alternative matches the name of a collection, look for a :processed value
-            if (value.keys && @fixture.data.keys).empty?
+            if (value.keys & @fixture.data.keys).empty?
               unless value.has_key? :processed
                 raise MissingProcessedValueError.new "The processed value to insert into the db is missing from the field '#{key}', aborting", key 
               end
@@ -26,7 +26,7 @@ module Mongo
             else
             
               # Does any of the options hold a record named after the value of the option?
-              options = value.keys && @fixture.data.keys
+              options = value.keys & @fixture.data.keys
               actual_option = options.each do |option|
                 break option if @fixture.data[option].has_key? value[option].to_sym
               end
