@@ -63,6 +63,9 @@ module Mongo
     
     # Returns the current database connection
     attr_reader :connection   
+
+    # Returns the inserter for this fixture
+    attr_reader :inserter
     
     # Sets the connection. Raises an ChangingConnectionIllegal exception if this fixture has already been checked
     def connection= the_connection
@@ -127,6 +130,7 @@ module Mongo
     class MissingConnectionError < StandardError; end
     class ChangingConnectionIllegal < StandardError; end
     class RollbackIllegalError < StandardError; end
+    class ReferencedRecordNotFoundError < StandardError; end
     class MissingProcessedValueError < StandardError
       attr_accessor :field
       def initialize message, field = nil
