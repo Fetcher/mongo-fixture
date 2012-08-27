@@ -22,7 +22,7 @@
 Then /^the loading of (\w+) fixture should fail$/ do |fixture|
   begin
     Mongo::Fixture.new fixture.to_sym, @DB
-  rescue Mongo::Fixture::MissingProcessedValueError => e
+  rescue Mongo::Fixture::ReferencedRecordNotFoundError => e
     @exception = e
   end
 end

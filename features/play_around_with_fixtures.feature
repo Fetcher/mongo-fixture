@@ -64,9 +64,6 @@ Scenario: Misconfigured password field
         missing: The field
     """
   Then the loading of misconfigured fixture should fail
-  And I should see that the collection was "users"
-  And I should see that the field was "password"
-  And I should see that the entry was "wrong_entry"
   And I should see 0 records in users
 
 Scenario: I save the done fixtures so to perform the rollbacks later
@@ -145,5 +142,5 @@ Scenario: Many-to-many associations
     """
   When I load the associations fixture
   Then I should see 2 records in users
-  And I should see 3 records in documents
+  And I should see 4 records in documents
   And the user named "John" should have in documents the id of the one titled "Doc"

@@ -15,7 +15,12 @@ module Mongo
       def simplify the_record
         the_returned_hash = {}
         the_record.each do |field, value|
-          value = resolve_field_hash value if value.is_a? Hash
+          begin
+            value = resolve_field_hash value if value.is_a? Hash
+          rescue Mongo::Fixture::ReferencedRecordNotFoundError => e
+            @fixture.rollback
+            raise e
+          end
           the_returned_hash[field] = value
         end
         return the_returned_hash
@@ -29,7 +34,20 @@ module Mongo
         intersection = value.keys & @fixture.data.keys
         if intersection.empty?
           raise Mongo::Fixture::ReferencedRecordNotFoundError,
-            "The referenced record 'user' was not found in the data for 'users'"
+            "This fixture does not include data for the collections [#{value.keys.join(',')}]"
+        else
+          intersection.each do |collection|
+            insert_data_for collection unless data_was_inserted_in? collection
+            if value[collection].is_a? Array
+              ids = []
+              value[collection].each do |element|
+                ids.push do_the_resolving collection, element.to_sym
+              end
+              return ids
+            else
+              return do_the_resolving collection, value[collection].to_sym
+            end
+          end
         end
       end
 
@@ -70,6 +88,7 @@ module Mongo
 #          end
 #          @inserted << collection
 #        end        
+        return if data_was_inserted_in? collection
         @fixture.data[collection].each do |key, record|
           begin
             @fixture.connection[collection].insert simplify record
@@ -86,8 +105,27 @@ module Mongo
         @inserted.include? collection
       end      
 
+      def inserted
+        @inserted
+      end
+
       # Returns the fixture
       attr_reader :fixture
+
+      private
+        def validate_record_existence collection, record_name
+          unless @fixture.data[collection].has_key? record_name
+            raise Mongo::Fixture::ReferencedRecordNotFoundError,
+              "The collection '#{collection}' doesn't include the record '#{record_name}'"
+          end
+        end
+
+        def do_the_resolving collection, record_name
+          validate_record_existence collection, record_name
+
+          record_data = simplify @fixture.data[collection][record_name]
+          return @fixture.connection[collection].find(record_data).first["_id"]
+        end
     end
   end
 end

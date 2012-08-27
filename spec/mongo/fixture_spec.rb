@@ -379,24 +379,22 @@ describe Mongo::Fixture do
     end    
     
     context "a fixture with a field with a <raw> and a <processed> alternative" do
-      pending "Waiting for the #resolve_field_hash method to be done" do
-        before do
-          Fast.file.write "test/fixtures/test/users.yaml", "user: { password: { raw: secret, processed: 35ferwt352 } }"
-        end
-        
-        it "should insert the <processed> alternative" do
-          database = double 'database'
-          insertable = double 'collection'
-          insertable.stub :count => 0
-          insertable.should_receive(:insert).with :password => '35ferwt352'
-          database.stub(:[]).and_return insertable
-          fix = Mongo::Fixture.new :test, database, false
-          fix.push
-        end
-        
-        after do
-          Fast.dir.remove! :test
-        end
+      before do
+        Fast.file.write "test/fixtures/test/users.yaml", "user: { password: { raw: secret, processed: 35ferwt352 } }"
+      end
+      
+      it "should insert the <processed> alternative" do
+        database = double 'database'
+        insertable = double 'collection'
+        insertable.stub :count => 0
+        insertable.should_receive(:insert).with :password => '35ferwt352'
+        database.stub(:[]).and_return insertable
+        fix = Mongo::Fixture.new :test, database, false
+        fix.push
+      end
+      
+      after do
+        Fast.dir.remove! :test
       end
     end
     
@@ -409,8 +407,8 @@ describe Mongo::Fixture do
         database = double 'database', :[] => stub( 'collection', :count => 0, :drop => nil  )
         fix = Mongo::Fixture.new :test, database, false
         expect { fix.push
-        }.to raise_error Mongo::Fixture::MissingProcessedValueError, 
-          "In record 'hey' to be inserted into 'users', the processed value of field 'pass' is missing, aborting"
+        }.to raise_error Mongo::Fixture::ReferencedRecordNotFoundError, 
+          "This fixture does not include data for the collections [raw]"
       end
       
       
@@ -419,69 +417,73 @@ describe Mongo::Fixture do
         fix = Mongo::Fixture.new :test, database, false
         fix.should_receive :rollback
         expect { fix.push
-        }.to raise_error Mongo::Fixture::MissingProcessedValueError
+        }.to raise_error Mongo::Fixture::ReferencedRecordNotFoundError
       end      
       
       after do
         Fast.dir.remove! :test
       end
     end
-    pending "Waiting for the #resolve_field_hash method to be done" do  
-      context "a fixture with a field with one alternative name matches a collection name" do
-        context "the alternative value matches a record and in the collection" do
-          before do 
-            Fast.file.write "test/fixtures/test/users.yaml", "pepe: { name: Jonah }"
-            Fast.file.write "test/fixtures/test/comments.yaml", "flamewar: { user: { users: pepe }, text: 'FLAME' }"
+
+    context "a fixture with a field with one alternative name matches a collection name" do
+      context "the alternative value matches a record and in the collection" do
+        before do 
+          Fast.file.write "test/fixtures/test/users.yaml", "pepe: { name: Jonah }"
+          Fast.file.write "test/fixtures/test/comments.yaml", "flamewar: { user: { users: pepe }, text: 'FLAME' }"
+        end
+        
+        it "should insert the comment so that the comment user value matches the '_id' of the user" do
+          comments = double 'comments', :count => 0, :drop => nil
+          comments.should_receive( :insert ).with( :user => "un id", :text => "FLAME" )
+
+          record = stub 'record'
+          record.should_receive( :[] ).with( "_id" ).and_return "un id"
+
+          usrs = double 'users', :count => 0, :find => stub( :first => record ), :drop => nil, :insert => nil
+
+          database = double 'database'
+          database.stub :[] do |coll|
+            case coll
+              when :users
+                usrs
+              when :comments
+                comments
+            end
           end
-          
-          it "should insert the comment so that the comment user value matches the '_id' of the user" do
+
+          fix = Mongo::Fixture.new :test, database, false
+          fix.push
+        end
+        
+        context "the collection is ordered so that the comment collection comes before the users one" do
+          it "should stop and process the users first" do
             database = double 'database'
-            comm = double 'comments', :count => 0, :drop => nil
-            comm.should_receive( :insert ).with( :user => "un id", :text => "FLAME" )
-            record = stub 'record'
-            record.should_receive( :[] ).with( "_id" ).and_return "un id"
-            usrs = double 'users', :count => 0, :find => stub( :first => record ), :drop => nil, :insert => nil
-            database.stub :[] do |coll|
-              case coll
+            usrs = double 'users', :count => 0, :insert => nil, :find => stub( :first => stub( :[] => "un id" ) )
+            database.stub :[] do |argument|
+              case argument
+                when :comments
+                  double 'comments', :count => 0, :insert => nil
                 when :users
                   usrs
-                when :comments
-                  comm
               end
             end
-            fix = Mongo::Fixture.new :test, database
-          end
-          
-          context "the collection is ordered so that the comment collection comes before the users one" do
-            it "should stop and process the users first" do
-              database = double 'database'
-              usrs = double 'users', :count => 0, :insert => nil, :find => stub( :first => stub( :[] => "un id" ) )
-              database.stub :[] do |argument|
-                case argument
-                  when :comments
-                    double 'comments', :count => 0, :insert => nil
-                  when :users
-                    usrs
-                end
-              end
-              fix = Mongo::Fixture.new :test, database, false
-              def fix.stub_data
-                @data = {
-                  :comments => SymbolMatrix.new("test/fixtures/test/comments.yaml"),
-                  :users => SymbolMatrix.new("test/fixtures/test/users.yaml") }
-              end
-              fix.stub_data
-              
-              fix.push
+            fix = Mongo::Fixture.new :test, database, false
+            def fix.stub_data
+              @data = {
+                :comments => SymbolMatrix.new("test/fixtures/test/comments.yaml"),
+                :users => SymbolMatrix.new("test/fixtures/test/users.yaml") }
             end
+            fix.stub_data
+            
+            fix.push
           end
+        end
           
-          after do
-            Fast.dir.remove! :test
-          end
-        end      
+        after do
+          Fast.dir.remove! :test
+        end
       end
-    end
+    end 
   end
 
   describe "#inserter" do

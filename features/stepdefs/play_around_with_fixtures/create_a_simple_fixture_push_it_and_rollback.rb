@@ -66,3 +66,10 @@ end
 Then /^I should see (\d+) records in (\w+)$/ do |amount, collection|
   @DB[collection].count.should == amount.to_i
 end
+
+And /^the user named "(\w+)" should have in documents the id of the one titled "(\w+)"$/ do 
+  |name, title|
+  user = @DB[:users].find_one :name => name
+  document = @DB[:documents].find_one :title => title
+  user["documents"].should include document["_id"]
+end
