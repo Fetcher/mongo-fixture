@@ -331,8 +331,7 @@ describe Mongo::Fixture::Inserter do
           fixture = stub 'fixture', :data => { :collection => "", :another_collection => ""}
           inserter = Mongo::Fixture::Inserter.new fixture
           expect { inserter.resolve_field_hash data
-          }.to raise_error Mongo::Fixture::ReferencedRecordNotFoundError,
-            "This fixture does not include data for the collections [users,comments]"
+          }.to raise_error Mongo::Fixture::ReferencedRecordNotFoundError
         end
       end
     end
