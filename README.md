@@ -24,7 +24,7 @@ today_morning:
 ```
 
 You can write a brief ruby script and insert the data into your mongo db:
-```
+```ruby
 require 'mongo'
 require 'mongo-fixture'
 

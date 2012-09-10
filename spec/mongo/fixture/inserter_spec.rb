@@ -54,8 +54,7 @@ describe Mongo::Fixture::Inserter do
         fixture = double 'fixture', :data => {}, :rollback => nil
         ins = Mongo::Fixture::Inserter.new fixture
         expect { ins.simplify @base_hash
-        }.to raise_error Mongo::Fixture::ReferencedRecordNotFoundError, 
-          "This fixture does not include data for the collections [raw,not_processed]"
+        }.to raise_error Mongo::Fixture::ReferencedRecordNotFoundError
       end
 
       it "should call #resolve_field_hash with the data hash" do
