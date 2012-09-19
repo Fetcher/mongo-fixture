@@ -146,6 +146,10 @@ And then execute:
 
     bundle
 
+Future
+------
+
+- Dump from a database to fixtures! This would be awesome.
 
 ## License
 
