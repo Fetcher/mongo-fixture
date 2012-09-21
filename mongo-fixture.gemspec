@@ -11,7 +11,8 @@ Gem::Specification.new do |gem|
   gem.add_dependency "mongo"
   gem.add_dependency "fast"
   gem.add_dependency "symbolmatrix"
-  
+  gem.add_dependency "virtus"
+
   gem.add_development_dependency "rspec"
 
   gem.files         = `git ls-files`.split($\)

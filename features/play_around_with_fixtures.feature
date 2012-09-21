@@ -66,19 +66,20 @@ Scenario: Misconfigured password field
   Then the loading of misconfigured fixture should fail
   And I should see 0 records in users
 
-Scenario: I save the done fixtures so to perform the rollbacks later
-  Given a collection users
-  And a file "test/fixtures/password/users.yaml" with: 
+Scenario: I don't actually store the fixture data
+  Given a file "test/fixtures/no_storage/articles.yaml" with:
     """
-    john:
-      name: John 
-      last_name: Wayne
+    entry:
+      name: The Article
+      text: The content
     """
-  And I load the password fixture
-  Then I should see 1 record in users with name "John" and last_name "Wayne" 
-  When I stash the fixture as done   
-  And I rollback the stashed fixtures
-  Then I should see 0 records in users
+  When I load the no_storage fixture without storing it
+  Then I should see in the fixture object the data of the record "entry" in "articles":
+    """
+    name: The Article
+    text: The content
+    """
+  And I should see 0 records in articles
 
 Scenario: References across collections
   Given a collection users

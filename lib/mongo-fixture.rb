@@ -2,6 +2,7 @@
 require "fast/fast"
 require "symbolmatrix"
 require "mongo"
+require "virtus"
 
 require "mongo-fixture/version"
 require "mongo-fixture/inserter"
@@ -10,6 +11,14 @@ module Mongo
 
   # Fixture managing class for MongoDB
   class Fixture
+    ## Properties
+    include Virtus
+
+    attribute :data
+    attribute :connection
+    attribute :name
+    attribute :inserter
+
     ## Class methods
     
     # @return [String] Returns the current path to the fixtures folder
@@ -27,11 +36,17 @@ module Mongo
     # Initializes the fixture handler
     # Accepts optionally a symbol as a reference to the fixture
     # and a Mongo::DB connection
-    def initialize fixture = nil, connection = nil, option_push = true
-      load fixture if fixture
-      
+    def initialize fixture = nil, connection = nil, options = true
+      @name       = fixture
       @connection = connection if connection
-      @inserter = Inserter.new self
+      @inserter   = Inserter.new self
+      option_push = options
+      
+      if options.is_a? Hash
+        option_push = false if options[:store] == false
+      end 
+
+      load fixture if fixture
       push if fixture && connection && option_push
     end    
     
@@ -44,8 +59,14 @@ module Mongo
         @data[file] = SymbolMatrix.new "#{fixtures_path}/#{fixture}/#{file}.yaml"
       end
     end
-        
-    # Returns the current fixtures path where Sequel::Fixtures looks for fixture folders
+       
+    # Adds this fixture to the fixtures stash to indicate that it was inserted
+    # The stash is a file named .mongo-fixture-stash in the fixtures directory 
+    def stash
+      Fast.file.append "#{fixtures_path}/.mongo-fixture-stash", "#{name}\n"
+    end
+
+    # Returns the current fixtures path where Mongo::Fixtures looks for fixture folders
     def fixtures_path
       Mongo::Fixture.path
     end    
@@ -65,22 +86,7 @@ module Mongo
       return @data[s] if @data && @data.has_key?(s)
       return super
     end
-    
-    # Returns the current database connection
-    attr_reader :connection   
-
-    # Returns the inserter for this fixture
-    attr_reader :inserter
-    
-    # Sets the connection. Raises an ChangingConnectionIllegal exception if this fixture has already been checked
-    def connection= the_connection
-      raise ChangingConnectionIllegal, "A check has already been performed, changing the connection now is illegal" if @checked
-      @connection = the_connection
-    end
-    
-    # Returns the current data collection
-    attr_reader :data
-    
+            
     # Assures that the collections are empty before proceeding
     def check
       return @checked if @checked # If already checked, it's alright

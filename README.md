@@ -102,8 +102,10 @@ fixture.users.john.name     # => "John"
 fixture.rollback            # returns users and messages to pristine status (#drop)
 
 
-fixture = Mongo::Fixture.new :simple, DB, false    # The `false` flag prevent the constructor from automatically pushing
-                                                   # the fixture into the database
+fixture = Mongo::Fixture.new  :simple, 
+                              DB, 
+                              :store => false    # The `false` flag prevent the constructor from automatically pushing
+                                                 # the fixture into the database
                                                     
 fixture.check               # Will fail if the user or messages collection
                             # were already occupied with something
