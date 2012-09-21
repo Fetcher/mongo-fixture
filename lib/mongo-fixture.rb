@@ -12,9 +12,14 @@ module Mongo
   class Fixture
     ## Class methods
     
-    # Returns the current path to the fixtures folder
+    # @return [String] Returns the current path to the fixtures folder
     def self.path
       @@path ||= "test/fixtures"
+    end
+
+    # Sets the current path to the fixtures folder
+    def self.path= the_path
+      @@path = the_path
     end
 
     ## Instance methods

@@ -3,4 +3,5 @@ After do
     @DB[collection].drop
   end
   Fast.dir.remove! :test, :fixtures
+  Mongo::Fixture.path = 'test/fixtures'
 end

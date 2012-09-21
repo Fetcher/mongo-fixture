@@ -7,6 +7,17 @@ describe Mongo::Fixture do
     end
   end
 
+  describe ".path=" do
+    it 'should set the path with the passed string' do
+      Mongo::Fixture.path = "fixtures"
+      Mongo::Fixture.path.should == "fixtures"
+    end
+
+    after do
+      Mongo::Fixture.path = 'test/fixtures'
+    end
+  end
+
   describe ".new" do
     context "a symbol is sent representing a fixture" do
       it "should call load" do  
