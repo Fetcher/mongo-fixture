@@ -2,6 +2,34 @@ require 'spec_helper'
 
 describe Mongo::Fixture do 
   describe 'Static methods' do
+    describe '.stashed' do
+      context 'there are a number of stashed fixtures' do 
+        before do
+          Fast.file.write 'test/fixtures/.mongo-fixture-stash', "this\nthat\nand_that\n"
+        end
+
+        it 'should return an array with the stashed fixtures' do
+          Mongo::Fixture.stashed.should include :this
+          Mongo::Fixture.stashed.should include :and_that
+          Mongo::Fixture.stashed.should include :that
+        end
+
+        after do
+          Fast.dir.remove! :test
+        end
+      end
+
+      context 'there is no fixture stashed' do
+        before do
+          File.should_not exist 'test/fixtures/.mongo-fixture-stash'
+        end
+
+        it 'should return an empty array' do
+          Mongo::Fixture.stashed.should be_empty
+        end
+      end
+    end
+
     describe ".path" do
       it "should return 'test/fixtures'" do
         Mongo::Fixture.path.should == "test/fixtures"

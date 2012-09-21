@@ -3,5 +3,7 @@ And /^I load the (\w+) fixture to be stashed$/ do |which|
 end
 
 When /^I rollback the stashed fixtures$/ do 
-  Mongo::Fixture.rollback_stashed
+  Mongo::Fixture.stashed.each do |fixture|
+    fixture.rollback
+  end
 end

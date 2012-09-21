@@ -31,6 +31,18 @@ module Mongo
       @@path = the_path
     end
 
+    # Looks for stashed fixtures in .mongo-fixture-stash in the fixture folder
+    # @return [Array] the fixtures that are currently stashed in the fixtures folder
+    def self.stashed
+      return [] unless File.exist? "#{path}/.mongo-fixture-stash"
+      
+      stashed = []
+      Fast.file.read("#{path}/.mongo-fixture-stash").split("\n").each do |item|
+        stashed << item.to_sym
+      end
+      return stashed
+    end
+
     ## Instance methods
     
     # Initializes the fixture handler
